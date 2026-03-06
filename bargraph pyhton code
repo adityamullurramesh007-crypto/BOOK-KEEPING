@@ -1,0 +1,72 @@
+from flask import Flask, jsonify
+import mysql.connector
+import matplotlib.pyplot as plt
+
+app = Flask(__name__)
+
+def get_expense_data():
+    
+    connection = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="your_database"
+    )
+
+    cursor = connection.cursor()
+
+    query = """
+    SELECT 
+        l.name AS category,
+        SUM(le.amount_amount) AS total_expense
+    FROM vouchers v
+    JOIN vch_ledger_entries le
+        ON le.voucher_guid = v.guid
+    JOIN ledgers l
+        ON l.guid = le.ledger_id
+    JOIN master.groups g
+        ON g.guid = l.group_id
+    WHERE
+        v.company_id = 1
+        AND v.is_deleted = 0
+        AND l.is_deleted = 0
+        AND g.name = 'Indirect Expenses'
+        AND le.amount_is_debit = 1
+    GROUP BY l.name
+    ORDER BY total_expense DESC;
+    """
+
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return data
+
+
+@app.route('/bar-chart')
+def bar_chart():
+
+    data = get_expense_data()
+
+    categories = [row[0] for row in data]
+    expenses = [row[1] for row in data]
+
+    plt.figure()
+
+    plt.bar(categories, expenses)
+
+    plt.xlabel("Expense Category")
+    plt.ylabel("Total Expense")
+    plt.title("Expense Dashboard")
+
+    plt.xticks(rotation=30)
+
+    plt.savefig("expense_chart.png")
+
+    return jsonify({"message": "Bar chart generated", "file": "expense_chart.png"})
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
