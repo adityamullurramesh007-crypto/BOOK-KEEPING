@@ -1,0 +1,17 @@
+SELECT 
+    g.name AS expense_category,
+    SUM(le.amount_amount) AS total_expense
+FROM vouchers v
+JOIN vch_ledger_entries le 
+    ON le.voucher_guid = v.guid
+JOIN ledgers l
+    ON l.guid = le.ledger_id
+JOIN master.groups g
+    ON g.guid = l.group_id
+WHERE 
+    v.company_id = 2
+    AND v.is_deleted = 0
+    AND l.is_deleted = 0
+    AND le.amount_is_debit = 1
+GROUP BY g.name
+ORDER BY total_expense DESC;
