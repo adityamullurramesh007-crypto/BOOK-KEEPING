@@ -1,0 +1,50 @@
+from flask import Flask, jsonify
+import mysql.connector
+
+app = Flask(__name__)
+
+# Database connection
+def get_db_connection():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="your_database"
+    )
+    return conn
+
+
+@app.route('/dashboard/revenue')
+def get_revenue():
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+    SELECT 
+        SUM(le.amount_amount) AS revenue
+    FROM vouchers v
+    JOIN vch_ledger_entries le
+        ON le.voucher_guid = v.guid
+    JOIN ledgers l
+        ON l.guid = le.ledger_id
+    JOIN master_groups g
+        ON g.guid = l.group_id
+    WHERE
+        v.company_id = 1
+        AND v.is_deleted = 0
+        AND g.name IN ('Sales Accounts','Direct Incomes','Indirect Incomes')
+        AND le.amount_is_debit = 0
+    """
+
+    cursor.execute(query)
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(result)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
