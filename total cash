@@ -1,0 +1,5 @@
+SELECT 
+    SUM(opening_balance_amount) AS bank_balance
+FROM ledgers
+WHERE company_id = 1
+AND name LIKE 'Bank-%';
