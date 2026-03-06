@@ -1,0 +1,14 @@
+SELECT 
+    SUM(le.amount_amount) AS revenue
+FROM vouchers v
+JOIN vch_ledger_entries le 
+    ON le.voucher_guid = v.guid
+JOIN ledgers l 
+    ON l.guid = le.ledger_id
+JOIN master.groups g 
+    ON g.guid = l.group_id
+WHERE 
+    v.company_id = 1
+    AND v.is_deleted = 0
+    AND g.name IN ('Sales Accounts','Direct Incomes','Indirect Incomes')
+    AND le.amount_is_debit = 0;
