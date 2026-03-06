@@ -1,0 +1,41 @@
+from flask import Flask, jsonify
+import mysql.connector
+
+app = Flask(__name__)
+
+# Database connection
+def get_db_connection():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="yourpassword",
+        database="yourdatabase"
+    )
+    return conn
+
+
+@app.route('/total-cash')
+def total_cash():
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            SUM(opening_balance_amount) AS bank_balance
+        FROM ledgers
+        WHERE company_id = 1
+        AND name LIKE 'Bank-%'
+    """
+
+    cursor.execute(query)
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(result)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
